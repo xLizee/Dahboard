@@ -5,8 +5,6 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 First, run the development server:
 
 ```bash
-- git clone git@github.com:EpitechPromo2024/B-DEV-500-NCE-5-1-dashboard-alizee.patricola.git
-- cd dashboard
 - npm install
 - npm run dev
 ```
