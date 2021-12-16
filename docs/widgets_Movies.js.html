@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: widgets/Movies.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: widgets/Movies.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { useEffect, useState, Fragment } from "react";
+import { Menu, Transition } from "@headlessui/react";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTrashAlt } from '@fortawesome/free-solid-svg-icons'
+import Carousel from "react-multi-carousel";
+import "react-multi-carousel/lib/styles.css";
+
+/**
+ * This function is used to collect the different information of Movies, with the API.
+ * @param {*} props 
+ *   
+ */
+
+const useFindMovies = (props) => {
+  const [type, setType] = useState(props);
+  const [data, setData] = useState(null);
+
+  return {
+    type,
+    setType,
+    data,
+    findMovies: async () => {
+      try {
+        const res = await fetch(
+          `https://api.themoviedb.org/3/movie/${type}?api_key=${process.env.moviesKey}&amp;language=en-US&amp;page=1`
+        );
+        let result = await res.json();
+        setData(result);
+        return;
+      } catch (e) {
+        console.error(e);
+      }
+    },
+  };
+};
+
+const Movies = (props) => {
+  const [update, setUpdate] = useState(false);
+  const defaultType = props.params.params.type;
+  let widgetId = props.params._id;
+  const { findMovies, type, setType, data } = useFindMovies(defaultType);
+  console.log(type)
+  console.log(data)
+
+  /**
+   * This functions is used to change the options Movies.
+   * @param {*} e 
+   */
+  const handleChange = async (e) => {
+    setType(e.target.value);
+    setUpdate(!update);
+  };
+  /**
+   * This function is used to delete the widget.
+   * @param {*} e 
+   */
+  const handleClick = async (e) => {
+    props.deleteWidget(widgetId);
+  };
+
+  useEffect(() => {
+    async function fetchData() {
+      await fetch("/api/widgets/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          req_type: "MOVIES",
+          _id: widgetId,
+          type: type,
+        }),
+      });
+
+      findMovies(type);
+    }
+    fetchData();
+  }, [type]);
+
+  const responsive = {
+    desktop: {
+      breakpoint: { max: 3000, min: 464 },
+      items: 1,
+    },
+  };
+  return (
+    &lt;div >
+      &lt;div className="z-0 flex flex-col justify-center py-12">
+        &lt;div className="relative max-w-xl mx-auto">
+          &lt;div className="relative bg-white shadow-lg rounded-3xl py-10 px-0 bg-clip-padding bg-opacity-60 border border-gray-100 w-72">
+            &lt;div className="absolute top-2 right-1"> &lt;button className="pr-2" onClick={handleClick}>&lt;FontAwesomeIcon className="h-3" icon={faTrashAlt}>&lt;/FontAwesomeIcon>&lt;/button>&lt;/div>
+            &lt;div className="absolute w-50 bottom-0 p-2 text-right">
+              &lt;Menu as="div" className="text-left">
+                &lt;div>
+                  &lt;Menu.Button className="z-2000 w-full px-4 py-2 text-sm font-medium text-white bg-black rounded-3xl bg-opacity-20 hover:bg-opacity-30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75">
+                    Options =
+                  &lt;/Menu.Button>
+                &lt;/div>
+                &lt;Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  &lt;Menu.Items className="absolute right-0 w-56 mt-2 origin-top-right bg-white divide-y divide-gray-100 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    &lt;div className="px-1 py-1 ">
+                      &lt;Menu.Item>
+                        {({ active }) => (
+                          &lt;button
+                            className={`${active ? "bg-violet-500 text-purple-900" : "text-gray-900"
+                              } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                            value={"popular"}
+                            onClick={handleChange}
+                          >
+                            Popular Movies
+                          &lt;/button>
+                        )}
+                      &lt;/Menu.Item>
+                      &lt;Menu.Item>
+                        {({ active }) => (
+                          &lt;button
+                            className={`${active ? "bg-violet-500 text-purple-900" : "text-gray-900"
+                              } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                            value={"top_rated"}
+                            onClick={handleChange}
+                          >
+                            Top Rated Movies
+                          &lt;/button>
+                        )}
+                      &lt;/Menu.Item>
+                      &lt;Menu.Item>
+                        {({ active }) => (
+                          &lt;button
+                            className={`${active ? "bg-violet-500 text-purple-900" : "text-gray-900"
+                              } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                            value={"now_playing"}
+                            onClick={handleChange}
+                          >
+                            In Theaters Now
+                          &lt;/button>
+                        )}
+                      &lt;/Menu.Item>
+                      &lt;Menu.Item>
+                        {({ active }) => (
+                          &lt;button
+                            className={`${active ? "bg-violet-500 text-purple-900" : "text-gray-900"
+                              } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                            value={"upcoming"}
+                            onClick={handleChange}
+                          >
+                            Upcoming Movies
+                          &lt;/button>
+                        )}
+                      &lt;/Menu.Item>
+                    &lt;/div>
+                  &lt;/Menu.Items>
+                &lt;/Transition>
+              &lt;/Menu>
+            &lt;/div>
+            &lt;h1 className="text-2xl text-purple-800 divide-x divide-green-500">Movies&lt;/h1>
+            &lt;div>
+              {data &amp;&amp; type == "now_playing" &amp;&amp; (
+                &lt;Carousel
+                  swipeable={false}
+                  draggable={false}
+                  showDots={false}
+                  responsive={responsive}
+                  arrows={true}
+                  ssr={true} // means to render carousel on server-side.
+                  infinite={true}
+                  autoPlay={true}
+                  autoPlaySpeed={4000}
+                  keyBoardControl={true}
+                  customTransition="all .5"
+                  transitionDuration={500}
+                  partialVisibile={true}
+                  containerClass="carousel-container relative z-0"
+                  dotListClass="custom-dot-list-style"
+                  itemClass="carousel-item-padding-40-px"
+                >
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">In Theaters Now&lt;/p>
+                    &lt;p className="italic mb-1">{data.results[0].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[0].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[0].vote_average}/10&lt;/p>
+                  &lt;/div>
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">In Theaters Now&lt;/p>
+                    &lt;p className="italic mb-2">{data.results[2].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[2].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[2].vote_average}/10&lt;/p>
+                  &lt;/div>
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">In Theaters Now&lt;/p>
+                    &lt;p className="italic mb-2">{data.results[6].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[6].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[6].vote_average}/10&lt;/p>
+                  &lt;/div>
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">In Theaters Now&lt;/p>
+                    &lt;p className="italic mb-2">{data.results[9].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[9].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[9].vote_average}/10&lt;/p>
+                  &lt;/div>
+                &lt;/Carousel>
+              )}
+            &lt;/div>
+            &lt;div>
+              {data &amp;&amp; type == "popular" &amp;&amp; (
+                &lt;Carousel
+                  swipeable={false}
+                  draggable={false}
+                  showDots={false}
+                  responsive={responsive}
+                  arrows={true}
+                  ssr={true} // means to render carousel on server-side.
+                  infinite={true}
+                  autoPlay={true}
+                  autoPlaySpeed={5000}
+                  keyBoardControl={true}
+                  customTransition="all .5"
+                  transitionDuration={500}
+                  containerClass="carousel-container relative z-0"
+                  dotListClass="custom-dot-list-style"
+                  itemClass="carousel-item-padding-10-px"
+                >
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">Popular Movies&lt;/p>
+                    &lt;p className="italic mb-1">{data.results[0].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[0].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[0].vote_average}/10&lt;/p>
+                  &lt;/div>
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">Popular Movies&lt;/p>
+                    &lt;p className="italic mb-2">{data.results[2].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[2].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[2].vote_average}/10&lt;/p>
+                  &lt;/div>
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">Popular Movies&lt;/p>
+                    &lt;p className="italic mb-2">{data.results[6].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[6].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[6].vote_average}/10&lt;/p>
+                  &lt;/div>
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">Popular Movies&lt;/p>
+                    &lt;p className="italic mb-2">{data.results[9].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[9].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[9].vote_average}/10&lt;/p>
+                  &lt;/div>
+                &lt;/Carousel>
+              )}
+            &lt;/div>
+            &lt;div>
+              {data &amp;&amp; type == "top_rated" &amp;&amp; (
+                &lt;Carousel
+                  swipeable={false}
+                  draggable={false}
+                  showDots={false}
+                  responsive={responsive}
+                  arrows={true}
+                  ssr={true} // means to render carousel on server-side.
+                  infinite={true}
+                  autoPlay={true}
+                  autoPlaySpeed={5000}
+                  keyBoardControl={true}
+                  customTransition="all .5"
+                  transitionDuration={500}
+                  containerClass="carousel-container relative z-0"
+                  dotListClass="custom-dot-list-style"
+                  itemClass="carousel-item-padding-10-px"
+                >
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">Top Rated Movies&lt;/p>
+                    &lt;p className="italic mb-1">{data.results[0].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[0].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[0].vote_average}/10&lt;/p>
+                  &lt;/div>
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">Top Rated Movies&lt;/p>
+                    &lt;p className="italic mb-2">{data.results[2].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[2].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[2].vote_average}/10&lt;/p>
+                  &lt;/div>
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">Top Rated Movies&lt;/p>
+                    &lt;p className="italic mb-2">{data.results[6].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[6].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[6].vote_average}/10&lt;/p>
+                  &lt;/div>
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">Top Rated Movies&lt;/p>
+                    &lt;p className="italic mb-2">{data.results[9].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[9].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[9].vote_average}/10&lt;/p>
+                  &lt;/div>
+                &lt;/Carousel>
+              )}
+            &lt;/div>
+            &lt;div>
+              {data &amp;&amp; type == "upcoming" &amp;&amp; (
+                &lt;Carousel
+                  swipeable={false}
+                  draggable={false}
+                  showDots={false}
+                  responsive={responsive}
+                  arrows={true}
+                  ssr={true} // means to render carousel on server-side.
+                  infinite={true}
+                  autoPlay={true}
+                  autoPlaySpeed={5000}
+                  keyBoardControl={true}
+                  customTransition="all .5"
+                  transitionDuration={500}
+                  containerClass="carousel-container relative z-0"
+                  dotListClass="custom-dot-list-style"
+                  itemClass="carousel-item-padding-10-px"
+                >
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">Upcoming Movies&lt;/p>
+                    &lt;p className="italic mb-1">{data.results[0].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[0].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[0].vote_average}/10&lt;/p>
+                  &lt;/div>
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">Upcoming Movies&lt;/p>
+                    &lt;p className="italic mb-2">{data.results[2].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[2].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[2].vote_average}/10&lt;/p>
+                  &lt;/div>
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">Upcoming Movies&lt;/p>
+                    &lt;p className="italic mb-2">{data.results[6].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[6].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[6].vote_average}/10&lt;/p>
+                  &lt;/div>
+                  &lt;div>
+                    &lt;p className="text-sm mb-3">Upcoming Movies&lt;/p>
+                    &lt;p className="italic mb-2">{data.results[9].title}&lt;/p>
+                    &lt;img className="h-32 mx-auto" src={`https://image.tmdb.org/t/p/original/${data.results[9].poster_path}`} />
+                    &lt;p className="mt-4">{data.results[9].vote_average}/10&lt;/p>
+                  &lt;/div>
+                &lt;/Carousel>
+              )}
+            &lt;/div>
+          &lt;/div>
+        &lt;/div>
+      &lt;/div>
+    &lt;/div>
+  );
+};
+
+export default Movies;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#Clock">Clock</a></li><li><a href="global.html#Crypto">Crypto</a></li><li><a href="global.html#Dashboard">Dashboard</a></li><li><a href="global.html#Footer">Footer</a></li><li><a href="global.html#Movies">Movies</a></li><li><a href="global.html#NavBar">NavBar</a></li><li><a href="global.html#SideBar">SideBar</a></li><li><a href="global.html#useFindMovies">useFindMovies</a></li><li><a href="global.html#useFindTicker">useFindTicker</a></li><li><a href="global.html#useFindWeather">useFindWeather</a></li><li><a href="global.html#WClock">WClock</a></li><li><a href="global.html#Weather">Weather</a></li><li><a href="global.html#WidgetModal">WidgetModal</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Sun Dec 05 2021 20:48:33 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: NavBar.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: NavBar.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { Menu, Transition } from "@headlessui/react";
+import { useState, Fragment } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useUser } from "@auth0/nextjs-auth0";
+import AnchorLink from "./AnchorLink";
+import WidgetModal from "./Modal";
+import SideBar from "./SideBar";
+
+/**
+ * This is the NavBar of the Dashboard. 
+ */
+const NavBar = ({ refreshData }) => {
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+  const { user, isLoading } = useUser();
+  const toggle = () => setIsOpen(!isOpen);
+  const toggleModal = () => setOpenModal(!openModal);
+
+  const handleClick = (e) => {
+    e.preventDefault();
+    router.push('/profile')
+  }
+
+  return (
+    &lt;nav className="flex fixed w-full items-center justify-between px-6 h-20 bg-white text-gray-700 border-b border-gray-200 z-10">
+      &lt;div className="flex items-center">
+        {!isLoading &amp;&amp; user &amp;&amp; (
+          &lt;button className="mr-2" aria-label="Open Menu" onClick={toggle}>
+            &lt;svg
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              className="w-8 h-8"
+            >
+              &lt;path d="M4 6h16M4 12h16M4 18h16">&lt;/path>
+            &lt;/svg>
+          &lt;/button>
+        )}
+      &lt;/div>
+      &lt;div className="flex items-center">
+        &lt;Image
+          src="/logo.png"
+          alt="Logo"
+          width={60}
+          height={60}
+          className="w-24"
+        />
+        &lt;span className="text-xl">OCTOBOARD&lt;/span>
+      &lt;/div>
+
+      &lt;div className="flex items-center">
+        &lt;div className="hidden md:flex md:justify-between md:bg-transparent">
+          {!isLoading &amp;&amp; !user &amp;&amp; (
+            &lt;button className="bg-transparent hover:bg-purple-500 text-purple-700 font-semibold hover:text-white py-2 px-4 border border-purple-500 hover:border-transparent rounded">
+              &lt;Link
+                href="/api/auth/login"
+                tabIndex={0}
+                testId="navbar-login-desktop"
+              >
+                Log In
+              &lt;/Link>
+            &lt;/button>
+          )}
+          {user &amp;&amp; (
+            &lt;div className="w-30 text-right">
+              &lt;Menu as="div" className="relative inline-block text-left">
+                &lt;div>
+                  &lt;Menu.Button>
+                    &lt;img
+                      src={user.picture}
+                      alt="Profile"
+                      className="nav-user-profile rounded-circle"
+                      width="50"
+                      height="50"
+                      decode="async"
+                      data-testid="navbar-picture-desktop"
+                    />
+                  &lt;/Menu.Button>
+                &lt;/div>
+                &lt;Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  &lt;Menu.Items className="absolute right-0 w-56 mt-2 origin-top-right bg-white divide-y divide-gray-100 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    &lt;div className="px-1 py-1 ">
+                      &lt;Menu.Item>
+                        {({ active }) => (
+                          &lt;button
+                            onClick={handleClick}
+                            className={`${
+                              active
+                                ? "bg-violet-500 text-black"
+                                : "text-gray-900"
+                            } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                          >
+                            {active ? (
+                              &lt;EditActiveIcon
+                                className="w-5 h-5 mr-2"
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              &lt;EditInactiveIcon
+                                className="w-5 h-5 mr-2"
+                                aria-hidden="true"
+                              />
+                            )}
+                            Profile
+                          &lt;/button>
+                        )}
+                      &lt;/Menu.Item>
+                    &lt;/div>
+                    &lt;div className="px-1 py-1">
+                      &lt;Menu.Item>
+                        {({ active }) => (
+                          &lt;AnchorLink
+                            href="/api/auth/logout"
+                            className={`${
+                              active
+                                ? "bg-violet-500 text-black"
+                                : "text-gray-900"
+                            } group flex rounded-md items-center w-full px-2 py-2 text-sm`}
+                          >
+                            {active ? (
+                              &lt;MoveActiveIcon
+                                className="w-5 h-5 mr-2"
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              &lt;MoveInactiveIcon
+                                className="w-5 h-5 mr-2"
+                                aria-hidden="true"
+                              />
+                            )}
+                            Log out
+                          &lt;/AnchorLink>
+                        )}
+                      &lt;/Menu.Item>
+                    &lt;/div>
+                  &lt;/Menu.Items>
+                &lt;/Transition>
+              &lt;/Menu>
+            &lt;/div>
+          )}
+        &lt;/div>
+      &lt;/div>
+      &lt;SideBar isOpen={isOpen} toggle={toggle} toggleModal={toggleModal} />
+      &lt;WidgetModal openModal={openModal} toggleModal={toggleModal} refreshData={refreshData}/>
+    &lt;/nav>
+  );
+};
+
+function EditActiveIcon(props) {
+  return (
+    &lt;svg
+      {...props}
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      &lt;path
+        d="M46 26c0 6.1-3.4 11.5-7 14.8V44c0 2 1 5.1 11 7a15.5 15.5 0 0 1 12 11H2a13.4 13.4 0 0 1 11-11c10-1.8 12-5 12-7v-3.2c-3.6-3.3-7-8.6-7-14.8v-9.6C18 6 25.4 2 32 2s14 4 14 14.4z"
+        fill="#8B5CF6"
+        stroke="#C4B5FD"
+        strokeWidth="2"
+        strokeMiterlimit="10"
+        strokeLinejoin="round"
+      />
+    &lt;/svg>
+  );
+}
+
+function EditInactiveIcon(props) {
+  return (
+    &lt;svg
+      {...props}
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      &lt;path
+        d="M46 26c0 6.1-3.4 11.5-7 14.8V44c0 2 1 5.1 11 7a15.5 15.5 0 0 1 12 11H2a13.4 13.4 0 0 1 11-11c10-1.8 12-5 12-7v-3.2c-3.6-3.3-7-8.6-7-14.8v-9.6C18 6 25.4 2 32 2s14 4 14 14.4z"
+        fill="#EDE9FE"
+        stroke="#A78BFA"
+        strokeWidth="2"
+        strokeMiterlimit="10"
+        strokeLinejoin="round"
+      />
+    &lt;/svg>
+  );
+}
+
+function MoveInactiveIcon(props) {
+  return (
+    &lt;svg
+      {...props}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      &lt;path d="M10 4H16V10" stroke="#A78BFA" strokeWidth="2" />
+      &lt;path d="M16 4L8 12" stroke="#A78BFA" strokeWidth="2" />
+      &lt;path d="M8 6H4V16H14V12" stroke="#A78BFA" strokeWidth="2" />
+    &lt;/svg>
+  );
+}
+
+function MoveActiveIcon(props) {
+  return (
+    &lt;svg
+      {...props}
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      &lt;path d="M10 4H16V10" stroke="#C4B5FD" strokeWidth="2" />
+      &lt;path d="M16 4L8 12" stroke="#C4B5FD" strokeWidth="2" />
+      &lt;path d="M8 6H4V16H14V12" stroke="#C4B5FD" strokeWidth="2" />
+    &lt;/svg>
+  );
+}
+
+export default NavBar;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#Clock">Clock</a></li><li><a href="global.html#Crypto">Crypto</a></li><li><a href="global.html#Dashboard">Dashboard</a></li><li><a href="global.html#Footer">Footer</a></li><li><a href="global.html#Movies">Movies</a></li><li><a href="global.html#NavBar">NavBar</a></li><li><a href="global.html#SideBar">SideBar</a></li><li><a href="global.html#useFindMovies">useFindMovies</a></li><li><a href="global.html#useFindTicker">useFindTicker</a></li><li><a href="global.html#useFindWeather">useFindWeather</a></li><li><a href="global.html#WClock">WClock</a></li><li><a href="global.html#Weather">Weather</a></li><li><a href="global.html#WidgetModal">WidgetModal</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Sun Dec 05 2021 20:48:33 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

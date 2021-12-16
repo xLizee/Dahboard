@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: widgets/Crypto.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: widgets/Crypto.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { useState, useEffect } from "react";
+import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+
+const KRAKEN_DATA_LABELS = Object.freeze({
+  a: "Ask",
+  b: "Bid",
+  c: "Last Trade Closed",
+  v: "Volume",
+  l: "Low",
+  h: "High",
+  o: "Today Opening Price",
+});
+
+/**
+ * This function is used to collect the information of the selected crypto with the API kraken
+ * which we use to access crypto information.
+ * @param {*} pair 
+ *   
+ */
+const useFindTicker = (pair) => {
+  const [symbol, setSymbol] = useState(pair);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+
+  return {
+    symbol,
+    setSymbol,
+    data,
+    error,
+    find: async () => {
+      try {
+        if (symbol.trim().length &lt; 1) {
+          console.log("Symbol is empty");
+          return;
+        }
+
+        const res = await fetch(
+          `https://api.kraken.com/0/public/Ticker?pair=${symbol.trim()}`
+        );
+        const { error, result } = await res.json();
+
+        if (error.length > 0) {
+          setError(error);
+          return;
+        } else setError(null);
+
+        setData(
+          Object.keys(result).reduce(
+            (pv, cv) => ({
+              ...result[cv],
+            }),
+            {}
+          )
+        );
+        return;
+      } catch (e) {
+        console.error(e);
+      }
+      
+    },
+  };
+};
+
+const Crypto = (props) => {
+  const [update, setUpdate] = useState(false);
+  const [value, setValue] = useState(new Date());
+  let defaultPair = props.params.params.pair;
+  let refreshRate = props.params.params.refreshRate;
+  let widgetId = props.params._id;
+  const { find, symbol, setSymbol, data, error } = useFindTicker(defaultPair);
+
+  let t = defaultPair.split("EUR").length - 1;
+  /**
+   * This function is used to resfresh the data, and display the new crypto information
+   */
+  const handleSubmit = async () => {
+    find();
+    await fetch("/api/widgets/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        req_type: "CRYPTO",
+        _id: widgetId,
+        pair: symbol,
+      }),
+    });
+    setUpdate(!update);
+  };
+  /**
+   * This function is used to change the crypto
+   * @param {*} e 
+   *   
+   */
+  const handleChange = async (e) => setSymbol(e.target.value);
+  /**
+   * This function is used for delete a widget
+   * @param {*} e 
+   */
+  const handleClick = async (e) => {
+    props.deleteWidget(widgetId);
+  };
+
+  useEffect(() => {
+    find();
+    const interval = setInterval(() => setValue(new Date()), refreshRate);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [update, value]);
+
+  return (
+    &lt;>
+      &lt;div>
+        &lt;div className="flex flex-col justify-center py-12">
+          &lt;div className="relative max-w-xl mx-auto">
+            &lt;div className="relative bg-white shadow-lg rounded-3xl pb-8 py-6 px-6 bg-clip-padding bg-opacity-60 border border-gray-100">
+              &lt;button
+                className="absolute bottom-1 text-black hover:text-red-600"
+                onClick={handleClick}
+              >
+                &lt;FontAwesomeIcon
+                  className="h-3"
+                  icon={faTrashAlt}
+                >&lt;/FontAwesomeIcon>
+              &lt;/button>
+              &lt;h2 className="text-purple-800 text-xl mb-2">
+                Search Crypto Currency Data
+              &lt;/h2>
+              &lt;div className="relative pt-2">
+                &lt;input
+                  className="h-8 w-60 pl-2 rounded-lg z-0 focus:shadow border-purple-100 focus:outline-none"
+                  type="text"
+                  placeholder={defaultPair}
+                  onChange={handleChange}
+                />
+                &lt;div className="absolute top-3 right-4">
+                  {" "}
+                  &lt;button className="pr-2" onClick={handleSubmit}>
+                    &lt;FontAwesomeIcon
+                      className="h-4 text-gray-400 hover:text-purple-400"
+                      icon={faSearch}
+                    >&lt;/FontAwesomeIcon>
+                  &lt;/button>
+                &lt;/div>
+              &lt;/div>
+              {/*  */}
+              {(error &amp;&amp; &lt;h1>{error}&lt;/h1>) ||
+                (data &amp;&amp; (
+                  &lt;div className="w-56 mx-6 mt-6 px-6 border border-purple-500 rounded-xl bg-gray-200">
+                    &lt;div className="pt-4 text-2xl">
+                      {t > 0 ? "€ " : "$ "}
+                      {(data.a[0] * 100) / 100}
+                    &lt;/div>
+                    &lt;div className="pt-1 text-sm">
+                      {(((data.c[0] - data.o) / data.c[0]) * 100).toFixed(2)}{" "}
+                      %
+                    &lt;/div>
+                    &lt;div className="flex flex-row mx-auto py-4 place-content-center">
+                      &lt;div className="mr-3">
+                        {" "}
+                        Volume {((data.v[0] * 100) / 100).toFixed(2)}
+                      &lt;/div>
+                      &lt;div className="mr-3">
+                        {" "}
+                        Low {((data.l[0] * 100) / 100).toFixed(2)}
+                      &lt;/div>
+                      &lt;div className="">
+                        {" "}
+                        High {((data.h[0] * 100) / 100).toFixed(2)}
+                      &lt;/div>
+                    &lt;/div>
+                  &lt;/div>
+                ))}
+            &lt;/div>
+          &lt;/div>
+        &lt;/div>
+      &lt;/div>
+    &lt;/>
+  );
+};
+
+export default Crypto;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#Clock">Clock</a></li><li><a href="global.html#Crypto">Crypto</a></li><li><a href="global.html#Dashboard">Dashboard</a></li><li><a href="global.html#Footer">Footer</a></li><li><a href="global.html#Movies">Movies</a></li><li><a href="global.html#NavBar">NavBar</a></li><li><a href="global.html#SideBar">SideBar</a></li><li><a href="global.html#useFindMovies">useFindMovies</a></li><li><a href="global.html#useFindTicker">useFindTicker</a></li><li><a href="global.html#useFindWeather">useFindWeather</a></li><li><a href="global.html#WClock">WClock</a></li><li><a href="global.html#Weather">Weather</a></li><li><a href="global.html#WidgetModal">WidgetModal</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Sun Dec 05 2021 20:48:33 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

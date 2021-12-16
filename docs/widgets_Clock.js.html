@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: widgets/Clock.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: widgets/Clock.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { useEffect, useState } from "react";
+import Clock from "react-clock";
+import "react-clock/dist/Clock.css";
+import moment from "moment-timezone";
+import { faSync } from "@fortawesome/free-solid-svg-icons";
+import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
+/**
+ * This is the Widget Clock, to get the time of the selected time zone
+ * @param { continent: continent, country: country} props 
+ *   
+ */
+
+const WClock = (props) => {
+  let currentParams = props.params.params;
+  let widgetId = props.params._id;
+  const [data, setData] = useState([]);
+  const [value, setValue] = useState(new Date());
+  const [error, setError] = useState(null);
+  const [country, setCountry] = useState(currentParams.country);
+  const [continent, setContinent] = useState(currentParams.continent);
+  /**
+   * FetchTimezone used to collect the information of the API Weather,
+   * which we use to access weather information.
+   */
+  const fetchTimezone = async () => {
+    try {
+      let timezone = continent + "/" + country;
+      let response = await fetch(
+        `http://worldtimeapi.org/api/timezone/${timezone}`
+      );
+      let data = await response.json();
+      setData(data);
+    } catch (e) {
+      console.error(e);
+      setError(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchTimezone();
+    const interval = setInterval(() => setValue(new Date()), 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
+  /**
+   * This function is used for delete a widget
+   * @param {*} e 
+   */
+  const handleClick = async (e) => {
+    props.deleteWidget(widgetId);
+  };
+  /**
+   * This function is used to change a continent
+   * @param {*} e 
+   *   
+   */
+  const handleChangeContinent = async (e) => setContinent(e.target.value);
+  /**
+   * This function is used to change a country
+   * @param {*} e 
+   *   
+   */
+  const handleChangeCountry = async (e) => setCountry(e.target.value);
+
+  /**
+   * This function is used to resfresh the data, and display the new date of the selected country
+   */
+  const handleSubmit = async () => {
+    await fetch("/api/widgets/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        req_type: "CLOCK",
+        _id: widgetId,
+        params: { continent: continent, country: country },
+      }),
+    });
+    await fetchTimezone();
+  };
+
+  return (
+    &lt;div>
+      &lt;div className="flex flex-col justify-center py-12">
+        &lt;div className="relative max-w-xl mx-auto">
+          &lt;div className="relative bg-white shadow-lg rounded-3xl px-6 py-4 bg-clip-padding bg-opacity-60 border border-gray-100">
+            &lt;button className="absolute left-4 top-2 text-black hover:text-red-600">
+              &lt;FontAwesomeIcon
+                className="h-3"
+                icon={faTrashAlt}
+                onClick={handleClick}
+              >&lt;/FontAwesomeIcon>
+            &lt;/button>
+            &lt;div className="mb-2 mt-4 text-xl">
+              {" "}
+              {moment.tz(data.timezone).format("LTS")}
+            &lt;/div>
+            &lt;Clock value={moment.tz(data.timezone).format("LTS")} />
+            &lt;div className="mt-4">{data.timezone}&lt;/div>
+        &lt;div className="mt-2 flex flex-col">
+          &lt;input
+            type="text"
+            className="mt-2 mx-auto h-6 w-32 pl-2 rounded-lg z-0 focus:shadow border-purple-100 focus:outline-none"
+            placeholder={continent}
+            onChange={handleChangeContinent}
+            />
+          &lt;input
+            type="text"
+            className="mt-2 mx-auto h-6 w-32 pl-2 rounded-lg z-0 focus:shadow border-purple-100 focus:outline-none"
+            placeholder={country}
+            onChange={handleChangeCountry}
+            />
+          &lt;div className="absolute bottom-9 right-1">
+            {" "}
+            &lt;button
+              className="text-black h-6 rounded-md pl-2 pr-2 bg-opacity-50 hover:text-purple-500"
+              onClick={handleSubmit}
+              >
+              &lt;FontAwesomeIcon className="h-3" icon={faSync}>&lt;/FontAwesomeIcon>
+            &lt;/button>{" "}
+              &lt;/div>
+            &lt;/div>
+          &lt;/div>
+        &lt;/div>
+      &lt;/div>
+    &lt;/div>
+  );
+};
+
+export default WClock;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#Clock">Clock</a></li><li><a href="global.html#Crypto">Crypto</a></li><li><a href="global.html#Dashboard">Dashboard</a></li><li><a href="global.html#Footer">Footer</a></li><li><a href="global.html#Movies">Movies</a></li><li><a href="global.html#NavBar">NavBar</a></li><li><a href="global.html#SideBar">SideBar</a></li><li><a href="global.html#useFindMovies">useFindMovies</a></li><li><a href="global.html#useFindTicker">useFindTicker</a></li><li><a href="global.html#useFindWeather">useFindWeather</a></li><li><a href="global.html#WClock">WClock</a></li><li><a href="global.html#Weather">Weather</a></li><li><a href="global.html#WidgetModal">WidgetModal</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.7</a> on Sun Dec 05 2021 20:48:33 GMT+0100 (Central European Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
